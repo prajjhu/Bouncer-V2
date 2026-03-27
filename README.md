@@ -21,3 +21,4 @@ Railway:
 2. Deploy repo on Railway
 3. Add `TOKEN` and `OPENAI_API_KEY`
 4. Redeploy
+Test deploy check
