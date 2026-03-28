@@ -162,16 +162,21 @@ async def on_message(message):
     if message.channel.name in JAIL_CHANNELS:
         return
 
-    if not state.moderation_enabled:
-        if "bouncer" in content:
+    # --- UPDATED: Bouncer always-on with 15s per-user cooldown ---
+    if "bouncer" in content:
+        last_bounce = state.bouncer_cooldowns.get(uid, 0)
+        if now - last_bounce >= 15:
+            state.bouncer_cooldowns[uid] = now
             await bouncer_ai_reply(message)
             return
+
+    if not state.moderation_enabled:
         if state.client.user in message.mentions:
             return
 
     if state.moderation_enabled and state.client.user in message.mentions:
         await message.channel.send(random.choice([
-            "yeah i’m watching 👀",
+            "yeah i'm watching 👀",
             "all systems running",
             "i see everything",
             "nothing escapes me",
@@ -185,7 +190,7 @@ async def on_message(message):
             return
         role = discord.utils.get(message.guild.roles, name="AI Access")
         if role not in message.author.roles:
-            await message.channel.send("you don’t have access to AI chat, dm @ap.snake 🔐", delete_after=5)
+            await message.channel.send("you don't have access to AI chat, dm @ap.snake 🔐", delete_after=5)
             return
         prompt = message.content[len(PREFIX + "chat"):].strip()
         res = await state.client_ai.chat.completions.create(
