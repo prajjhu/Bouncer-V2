@@ -28,3 +28,4 @@ panel_registered = False
 pair_hostility = {}
 pair_last_time = {}
 pair_warned = {}
+bouncer_cooldowns = {}
