@@ -138,13 +138,19 @@ def has_severe_target_phrase(text):
 
 
 def contains_banned_pattern(text):
-    normalized = normalize_text(text)
-    patterns = [
-        r'ni*g+[^a\s]',   # niggr, nigr, nigguh, etc. — but NOT nigga
-        r'ni*g+$',       # catches "nigg" or "nig" at end of message
-        r'f+a+g+[oet]',  # faggot, fagt, fagot, etc.
-    ]
-    for pattern in patterns:
-        if re.search(pattern, normalized):
+    cleaned = text.lower()
+    for k, v in {"4":"a","0":"o","1":"i","3":"e","$":"s","!":"i","@":"a"}.items():
+        cleaned = cleaned.replace(k, v)
+    cleaned = re.sub(r'(.)\1+', r'\1', cleaned)
+
+    words = re.findall(r'\b\w+\b', cleaned)
+
+    nigger_bypasses = {"nigr", "nger", "ngr", "niguh", "nigu"}
+    faggot_bypasses = {"fagt", "fagot"}
+
+    for word in words:
+        if word in nigger_bypasses:
+            return True
+        if word in faggot_bypasses:
             return True
     return False
