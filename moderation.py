@@ -81,14 +81,15 @@ async def log_action(guild, title, desc):
         await ch.send(embed=embed)
 
 
-async def notify_mods_jail(channel, guild, member, reason):
+async def notify_mods_jail(channel, guild, member, reason, trigger=None):
     role = discord.utils.get(guild.roles, name=MODERATOR_ROLE_NAME)
     if not role:
         print(f"MOD ALERT ERROR: role '{MODERATOR_ROLE_NAME}' not found")
         return
+    trigger_text = f"\nMessage: \"{trigger}\"" if trigger else ""
     try:
         await channel.send(
-            f"{role.mention} {member.mention} has been jailed, due to: {reason}",
+            f"{role.mention} {member.mention} has been jailed, due to: {reason}{trigger_text}",
             allowed_mentions=discord.AllowedMentions(roles=True, users=True),
             delete_after=10
         )
@@ -96,7 +97,7 @@ async def notify_mods_jail(channel, guild, member, reason):
         print("MOD ALERT ERROR:", e)
 
 
-async def jail_user(member, guild, reason, source_channel=None):
+async def jail_user(member, guild, reason, source_channel=None, trigger=None):
     uid = str(member.id)
     now = time.time()
     if uid in state.user_jail_lock and now - state.user_jail_lock[uid] < 3:
@@ -110,11 +111,12 @@ async def jail_user(member, guild, reason, source_channel=None):
         except:
             pass
 
-    await log_action(guild, "🚨 User Jailed", f"{member.mention}\n{reason}")
+    trigger_text = f"\nMessage: \"{trigger}\"" if trigger else ""
+    await log_action(guild, "🚨 User Jailed", f"{member.mention}\nReason: {reason}{trigger_text}")
     add_recent_action(f"{member.display_name} jailed - {reason}")
 
     if source_channel:
-        await notify_mods_jail(source_channel, guild, member, reason)
+        await notify_mods_jail(source_channel, guild, member, reason, trigger)
 
     jail_channel = None
     for ch in guild.text_channels:
@@ -125,7 +127,7 @@ async def jail_user(member, guild, reason, source_channel=None):
     if jail_channel:
         try:
             await jail_channel.send(
-                f"🚨 {member.mention} was jailed\nReason: {reason}",
+                f"🚨 {member.mention} was jailed\nReason: {reason}{trigger_text}",
                 delete_after=60
             )
         except Exception as e:
@@ -144,7 +146,7 @@ async def handle_targeted_harassment(message, now):
 
     if has_severe_target_phrase(message.content):
         await message.channel.send(bot_reply("jail"), delete_after=5)
-        await jail_user(message.author, message.guild, "Severe targeted harassment", message.channel)
+        await jail_user(message.author, message.guild, "Severe targeted harassment", message.channel, trigger=message.content)
         state.pair_hostility.pop(pair, None)
         state.pair_last_time.pop(pair, None)
         state.pair_warned.pop(pair, None)
@@ -192,7 +194,7 @@ async def handle_targeted_harassment(message, now):
     if score >= 5 and warned_at and now - warned_at <= WARNING_DECAY:
         add_recent_action(f"{message.author.display_name} jailed for repeated targeted harassment")
         await message.channel.send(bot_reply("jail"), delete_after=5)
-        await jail_user(message.author, message.guild, "Repeated targeted harassment", message.channel)
+        await jail_user(message.author, message.guild, "Repeated targeted harassment", message.channel, trigger=message.content)
         state.pair_hostility.pop(pair, None)
         state.pair_last_time.pop(pair, None)
         state.pair_warned.pop(pair, None)
