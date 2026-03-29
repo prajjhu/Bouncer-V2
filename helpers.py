@@ -20,7 +20,7 @@ from config import (
 def bot_reply(level):
     return random.choice({
         "warn": ["easy there 😅", "chill a bit bro", "not that serious", "watch it 👀"],
-        "serious": ["yeah that crossed the line", "nah we don’t do that here", "alright that’s enough", "you’re pushing it now"],
+        "serious": ["yeah that crossed the line", "nah we don't do that here", "alright that's enough", "you're pushing it now"],
         "jail": ["yeah… you earned that one", "straight to jail 💀", "nah take a break", "you did that to yourself fr"]
     }[level])
 
@@ -29,7 +29,7 @@ def warn_user(member, level):
     if level == "medium":
         return f"⚠️ {member.mention} chill a bit"
     if level == "high":
-        return f"🚨 {member.mention} that’s too far"
+        return f"🚨 {member.mention} that's too far"
 
 
 def normalize_text(text):
@@ -135,3 +135,16 @@ def has_severe_target_phrase(text):
     t = normalize_text(text)
     severe_normalized = [normalize_text(x) for x in SEVERE_TARGET_PHRASES]
     return any(p in t for p in severe_normalized)
+
+
+def contains_banned_pattern(text):
+    normalized = normalize_text(text)
+    patterns = [
+        r'ni+g+[^a]',   # niggr, nigr, nigguh, etc. — but NOT nigga
+        r'ni+g+$',       # catches "nigg" or "nig" at end of message
+        r'f+a+g+[oet]',  # faggot, fagt, fagot, etc.
+    ]
+    for pattern in patterns:
+        if re.search(pattern, normalized):
+            return True
+    return False
