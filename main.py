@@ -155,7 +155,7 @@ async def on_message(message):
             else:
                 await message.channel.send(f"{message.author.mention} warned already.", delete_after=5)
                 await message.channel.send(bot_reply("jail"), delete_after=5)
-                await jail_user(message.author, message.guild, "Discord invite advertising", message.channel)
+                await jail_user(message.author, message.guild, "Discord invite advertising", message.channel, trigger=message.content)
                 state.invite_ad_warnings.remove(uid)
                 state.invite_ad_warning_times.pop(uid, None)
             return
@@ -209,12 +209,11 @@ async def on_message(message):
     if not state.moderation_enabled:
         return
 
-    # --- UPDATED: pattern check added alongside BANNED list ---
     if any(b in normalized for b in NORMALIZED_BANNED) or contains_banned_pattern(content):
         await message.delete()
         await cleanup_spam(message.channel, message.author, content)
         await message.channel.send(bot_reply("jail"), delete_after=5)
-        await jail_user(message.author, message.guild, "Banned word", message.channel)
+        await jail_user(message.author, message.guild, "Banned word", message.channel, trigger=message.content)
         return
 
     handled = await handle_targeted_harassment(message, now)
@@ -226,7 +225,7 @@ async def on_message(message):
     if len(state.user_message_times[uid]) >= 7:
         await cleanup_recent_spam(message.channel, message.author)
         await message.channel.send("bro relax 💀", delete_after=5)
-        await jail_user(message.author, message.guild, "Raid spam", message.channel)
+        await jail_user(message.author, message.guild, "Raid spam", message.channel, trigger=message.content)
         return
 
     if len(content) > 5:
@@ -243,7 +242,7 @@ async def on_message(message):
         if result == "HIGH":
             if has_severe_target_phrase(message.content):
                 await message.channel.send(bot_reply("jail"), delete_after=5)
-                await jail_user(message.author, message.guild, "Severe behavior", message.channel)
+                await jail_user(message.author, message.guild, "Severe behavior", message.channel, trigger=message.content)
                 state.user_high_strikes[uid] = 0
                 return
             s = state.user_high_strikes.get(uid, 0) + 1
@@ -254,7 +253,7 @@ async def on_message(message):
                 return
             if s >= 3:
                 await message.channel.send(bot_reply("jail"), delete_after=5)
-                await jail_user(message.author, message.guild, "Severe behavior", message.channel)
+                await jail_user(message.author, message.guild, "Severe behavior", message.channel, trigger=message.content)
                 state.user_high_strikes[uid] = 0
                 return
 
@@ -268,7 +267,7 @@ async def on_message(message):
     if state.user_repeat_count[uid] >= 5:
         await cleanup_recent_spam(message.channel, message.author)
         await message.channel.send(bot_reply("jail"), delete_after=5)
-        await jail_user(message.author, message.guild, "Spam", message.channel)
+        await jail_user(message.author, message.guild, "Spam", message.channel, trigger=message.content)
         return
 
 
