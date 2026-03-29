@@ -18,6 +18,7 @@ from helpers import (
     has_severe_target_phrase,
     bot_reply,
     is_similar,
+    contains_banned_pattern,
 )
 from ai_features import bouncer_ai_reply, clear_standby_messages, analyze
 from moderation import cleanup_spam, cleanup_recent_spam, log_action, jail_user, handle_targeted_harassment, decay_pair_state
@@ -162,7 +163,7 @@ async def on_message(message):
     if message.channel.name in JAIL_CHANNELS:
         return
 
-    # --- UPDATED: Bouncer always-on with 15s per-user cooldown ---
+    # --- Bouncer always-on with 15s per-user cooldown ---
     if "bouncer" in content:
         last_bounce = state.bouncer_cooldowns.get(uid, 0)
         if now - last_bounce >= 15:
@@ -208,7 +209,8 @@ async def on_message(message):
     if not state.moderation_enabled:
         return
 
-    if any(b in normalized for b in NORMALIZED_BANNED):
+    # --- UPDATED: pattern check added alongside BANNED list ---
+    if any(b in normalized for b in NORMALIZED_BANNED) or contains_banned_pattern(content):
         await message.delete()
         await cleanup_spam(message.channel, message.author, content)
         await message.channel.send(bot_reply("jail"), delete_after=5)
