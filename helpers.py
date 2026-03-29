@@ -140,8 +140,8 @@ def has_severe_target_phrase(text):
 def contains_banned_pattern(text):
     normalized = normalize_text(text)
     patterns = [
-        r'ni+g+[^a]',   # niggr, nigr, nigguh, etc. — but NOT nigga
-        r'ni+g+$',       # catches "nigg" or "nig" at end of message
+        r'ni*g+[^a\s]',   # niggr, nigr, nigguh, etc. — but NOT nigga
+        r'ni*g+$',       # catches "nigg" or "nig" at end of message
         r'f+a+g+[oet]',  # faggot, fagt, fagot, etc.
     ]
     for pattern in patterns:
